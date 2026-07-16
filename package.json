@@ -1,0 +1,16 @@
+{
+  "name": "anc-sleep-earwrap-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dashboard & interactive demo site for the Posture-Adaptive Hybrid Acoustic Sleep Ear-Wrap System (patent disclosure project).",
+  "scripts": {
+    "dev": "concurrently -n server,web -c magenta,blue \"npm --prefix server run dev\" \"npm --prefix web run dev\"",
+    "dev:web": "npm --prefix web run dev",
+    "dev:server": "npm --prefix server run dev",
+    "build": "npm --prefix web run build",
+    "start": "concurrently -n server,web -c magenta,blue \"npm --prefix server run start\" \"npm --prefix web run start\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
