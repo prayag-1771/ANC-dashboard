@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+/*
+  Design tokens — dark, sleep-tech theme.
+  Chart colors follow the validated dark-mode data-viz palette
+  (surface #1a1a19; categorical slots in fixed order).
+*/
+:root {
+  color-scheme: dark;
+
+  --plane: #0d0d0d;            /* page background       */
+  --surface-1: #1a1a19;        /* cards / chart surface */
+  --surface-2: #232322;        /* raised / hover        */
+  --sidebar: #131312;
+
+  --ink: #ffffff;
+  --ink-2: #c3c2b7;
+  --ink-muted: #898781;
+
+  --hairline: rgba(255, 255, 255, 0.1);
+  --grid: #2c2c2a;
+  --baseline: #383835;
+
+  --accent: #3987e5;           /* brand accent = series-1 blue   */
+  --accent-soft: rgba(57, 135, 229, 0.14);
+  --violet: #9085e9;           /* secondary accent (slot 7)      */
+  --violet-soft: rgba(144, 133, 233, 0.13);
+
+  /* categorical series, fixed order (dark steps) */
+  --series-1: #3987e5;
+  --series-2: #008300;
+  --series-3: #d55181;
+  --series-4: #c98500;
+  --series-5: #199e70;
+
+  /* status — reserved, never reused as series */
+  --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-serious: #ec835a;
+  --status-critical: #d03b3b;
+}
+
+@theme inline {
+  --color-plane: var(--plane);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-sidebar: var(--sidebar);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-muted: var(--ink-muted);
+  --color-hairline: var(--hairline);
+  --color-grid: var(--grid);
+  --color-accent: var(--accent);
+  --color-violet: var(--violet);
+  --color-series-1: var(--series-1);
+  --color-series-2: var(--series-2);
+  --color-series-3: var(--series-3);
+  --color-series-4: var(--series-4);
+  --color-series-5: var(--series-5);
+  --color-good: var(--status-good);
+  --color-warning: var(--status-warning);
+  --color-serious: var(--status-serious);
+  --color-critical: var(--status-critical);
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+html,
+body {
+  background: var(--plane);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* soft night-sky wash behind everything — the only decorative flourish */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(1200px 600px at 85% -10%, rgba(144, 133, 233, 0.07), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(57, 135, 229, 0.06), transparent 60%);
+}
+
+::selection {
+  background: rgba(57, 135, 229, 0.35);
+}
+
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: 14px;
+}
+
+.label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  font-weight: 600;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fade-up 0.5s ease both; }
+
+/* thin scrollbars that fit the theme */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--baseline) transparent;
+}
