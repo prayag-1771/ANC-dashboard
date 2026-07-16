@@ -1,0 +1,16 @@
+{
+  "name": "anc-sim-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Simulation + telemetry server for the Posture-Adaptive Hybrid Acoustic Sleep Ear-Wrap System. Streams simulated device telemetry over WebSocket and exposes a hardware-ready ingestion API for the real ESP32 prototype.",
+  "scripts": {
+    "dev": "node src/index.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "ws": "^8.18.0"
+  }
+}
