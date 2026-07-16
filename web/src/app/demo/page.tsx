@@ -217,16 +217,20 @@ export default function DemoPage() {
     const inData = new Float32Array(rig.inAnalyser.fftSize);
     const outData = new Float32Array(rig.outAnalyser.fftSize);
 
-    const css = getComputedStyle(document.documentElement);
-    const colors = {
-      grid: css.getPropertyValue("--grid").trim() || "#2c2c2a",
-      inC: css.getPropertyValue("--series-1").trim() || "#3987e5",
-      anti: css.getPropertyValue("--violet").trim() || "#9085e9",
-      out: css.getPropertyValue("--series-5").trim() || "#199e70",
-      ink: css.getPropertyValue("--ink-muted").trim() || "#898781",
+    // resolved per frame so a theme switch recolors the scope live
+    const readColors = () => {
+      const css = getComputedStyle(document.documentElement);
+      return {
+        grid: css.getPropertyValue("--grid").trim() || "#2c2c2a",
+        inC: css.getPropertyValue("--series-1").trim() || "#3987e5",
+        anti: css.getPropertyValue("--violet").trim() || "#9085e9",
+        out: css.getPropertyValue("--series-5").trim() || "#199e70",
+        ink: css.getPropertyValue("--ink-muted").trim() || "#898781",
+      };
     };
 
     const draw = () => {
+      const colors = readColors();
       const W = canvas.width;
       const H = canvas.height;
       rig.inAnalyser.getFloatTimeDomainData(inData);
@@ -363,7 +367,7 @@ export default function DemoPage() {
               >
                 <span className="flex items-center justify-between">
                   <span className="text-sm font-semibold">Passive acoustic layers</span>
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${passiveOn ? "bg-violet text-black" : "bg-surface-2 text-ink-muted"}`}>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${passiveOn ? "bg-violet text-[var(--on-violet)]" : "bg-surface-2 text-ink-muted"}`}>
                     {passiveOn ? "ON" : "OFF"}
                   </span>
                 </span>
@@ -380,7 +384,7 @@ export default function DemoPage() {
               >
                 <span className="flex items-center justify-between">
                   <span className="text-sm font-semibold">Active noise cancellation</span>
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${ancOn ? "bg-accent text-black" : "bg-surface-2 text-ink-muted"}`}>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${ancOn ? "bg-accent text-[var(--on-accent)]" : "bg-surface-2 text-ink-muted"}`}>
                     {ancOn ? "ON" : "OFF"}
                   </span>
                 </span>
@@ -391,7 +395,7 @@ export default function DemoPage() {
               </button>
             </div>
             {!anyPlaying && (
-              <p className="mt-3 text-xs text-warning">Start a noise source above to hear the layers work.</p>
+              <p className="mt-3 text-xs text-ink-2">⚠️ Start a noise source above to hear the layers work.</p>
             )}
           </section>
 
@@ -403,7 +407,13 @@ export default function DemoPage() {
                 residual level <span className="font-semibold text-ink">{meterDb} dBFS</span>
               </p>
             </div>
-            <canvas ref={canvasRef} width={800} height={280} className="w-full rounded-lg bg-[#111110]" />
+            <canvas
+              ref={canvasRef}
+              width={800}
+              height={280}
+              className="w-full rounded-lg"
+              style={{ background: "var(--scope-bg)" }}
+            />
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">
               Top: what the world throws at you. Middle: the wrap&apos;s generated anti-noise —
               a mirror image, 180° out of phase (flat while ANC is off). Bottom: what actually

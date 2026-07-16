@@ -1,9 +1,11 @@
 @import "tailwindcss";
 
 /*
-  Design tokens — dark, sleep-tech theme.
-  Chart colors follow the validated dark-mode data-viz palette
-  (surface #1a1a19; categorical slots in fixed order).
+  Design tokens — dark (default) + soft light theme.
+  Chart colors follow the validated data-viz palette for each mode
+  (dark surface #1a1a19, light surface #fcfcfb; categorical slots in fixed order).
+  The light theme deliberately avoids pure white — warm grey surfaces are easier
+  on the eyes.
 */
 :root {
   color-scheme: dark;
@@ -25,8 +27,10 @@
   --accent-soft: rgba(57, 135, 229, 0.14);
   --violet: #9085e9;           /* secondary accent (slot 7)      */
   --violet-soft: rgba(144, 133, 233, 0.13);
+  --on-accent: #000000;        /* text on accent-filled controls */
+  --on-violet: #000000;
 
-  /* categorical series, fixed order (dark steps) */
+  /* categorical series, fixed order */
   --series-1: #3987e5;
   --series-2: #008300;
   --series-3: #d55181;
@@ -38,6 +42,56 @@
   --status-warning: #fab219;
   --status-serious: #ec835a;
   --status-critical: #d03b3b;
+
+  /* fixed-role surfaces */
+  --code-bg: #0a0a09;          /* code blocks stay dark in both themes */
+  --code-ink: #c3c2b7;
+  --scope-bg: #111110;         /* oscilloscope canvas */
+  --posture-neutral: #4c4a42;  /* "on back" band */
+  --diagram-strong: #4c4a42;   /* cross-section resting strokes */
+  --diagram-soft: #3d3c38;
+
+  /* decorative night-sky wash */
+  --wash-1: rgba(144, 133, 233, 0.07);
+  --wash-2: rgba(57, 135, 229, 0.06);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --plane: #f4f4f1;            /* warm grey, not white  */
+  --surface-1: #fcfcfb;
+  --surface-2: #eeede8;
+  --sidebar: #f8f8f5;
+
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --ink-muted: #898781;
+
+  --hairline: rgba(11, 11, 11, 0.1);
+  --grid: #e1e0d9;
+  --baseline: #c3c2b7;
+
+  --accent: #2a78d6;
+  --accent-soft: rgba(42, 120, 214, 0.12);
+  --violet: #4a3aa7;
+  --violet-soft: rgba(74, 58, 167, 0.1);
+  --on-accent: #ffffff;
+  --on-violet: #ffffff;
+
+  --series-1: #2a78d6;
+  --series-2: #008300;
+  --series-3: #e87ba4;
+  --series-4: #eda100;
+  --series-5: #1baf7a;
+
+  --scope-bg: #eeede8;
+  --posture-neutral: #d5d4cc;
+  --diagram-strong: #c9c8c0;
+  --diagram-soft: #dad9d2;
+
+  --wash-1: rgba(74, 58, 167, 0.05);
+  --wash-2: rgba(42, 120, 214, 0.04);
 }
 
 @theme inline {
@@ -73,7 +127,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* soft night-sky wash behind everything — the only decorative flourish */
+/* soft sky wash behind everything — the only decorative flourish */
 body::before {
   content: "";
   position: fixed;
@@ -81,8 +135,8 @@ body::before {
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(1200px 600px at 85% -10%, rgba(144, 133, 233, 0.07), transparent 60%),
-    radial-gradient(900px 500px at -10% 110%, rgba(57, 135, 229, 0.06), transparent 60%);
+    radial-gradient(1200px 600px at 85% -10%, var(--wash-1), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, var(--wash-2), transparent 60%);
 }
 
 ::selection {

@@ -148,7 +148,7 @@ export default function ClaimsPage() {
               strokeLinecap="round"
               onMouseEnter={() => setHoverPart("cushion")}
               onMouseLeave={() => setHoverPart(null)}
-              style={partStyle("cushion", "#4c4a42", "var(--violet)")}
+              style={partStyle("cushion", "var(--diagram-strong)", "var(--violet)")}
             />
             {/* passive acoustic layer */}
             <path
@@ -158,7 +158,7 @@ export default function ClaimsPage() {
               strokeLinecap="round"
               onMouseEnter={() => setHoverPart("passive")}
               onMouseLeave={() => setHoverPart(null)}
-              style={partStyle("passive", "#3d3c38", "var(--series-3)")}
+              style={partStyle("passive", "var(--diagram-soft)", "var(--series-3)")}
             />
 
             {/* ear */}

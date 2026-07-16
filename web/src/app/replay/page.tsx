@@ -38,7 +38,7 @@ interface Night {
 }
 
 const POSTURE_COLOR: Record<Sample["posture"], string> = {
-  supine: "#4c4a42",
+  supine: "var(--posture-neutral)",
   left: "var(--series-3)",
   right: "var(--series-4)",
 };
@@ -253,7 +253,7 @@ export default function ReplayPage() {
               if (!playing && night && cursor >= night.minutes - 2) setCursor(0);
               setPlaying((p) => !p);
             }}
-            className="grid size-10 place-items-center rounded-full bg-accent text-black transition-transform hover:scale-105"
+            className="grid size-10 place-items-center rounded-full bg-accent text-[var(--on-accent)] transition-transform hover:scale-105"
             aria-label={playing ? "Pause" : "Play"}
           >
             {playing ? (

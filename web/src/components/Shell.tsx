@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { useTelemetry } from "@/lib/telemetry";
 
 const TelemetryContext = createContext<ReturnType<typeof useTelemetry> | null>(null);
@@ -86,6 +86,51 @@ function StatusPill() {
   );
 }
 
+function ThemeToggle() {
+  const [light, setLight] = useState(false);
+
+  useEffect(() => {
+    setLight(document.documentElement.dataset.theme === "light");
+  }, []);
+
+  const toggle = () => {
+    const next = !light;
+    setLight(next);
+    if (next) {
+      document.documentElement.dataset.theme = "light";
+    } else {
+      delete document.documentElement.dataset.theme;
+    }
+    try {
+      localStorage.setItem("theme", next ? "light" : "dark");
+    } catch {
+      /* private mode */
+    }
+  };
+
+  return (
+    <button
+      onClick={toggle}
+      className="grid size-8 place-items-center rounded-full border border-hairline bg-surface-1 text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
+      title={light ? "Switch to dark theme" : "Switch to light theme"}
+      aria-label={light ? "Switch to dark theme" : "Switch to light theme"}
+    >
+      {light ? (
+        /* moon — click to go dark */
+        <svg viewBox="0 0 20 20" fill="none" className="size-4">
+          <path d="M13 3a7.5 7.5 0 1 0 4 13.5A8.4 8.4 0 0 1 13 3z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+        </svg>
+      ) : (
+        /* sun — click to go light */
+        <svg viewBox="0 0 20 20" fill="none" className="size-4">
+          <circle cx="10" cy="10" r="3.5" stroke="currentColor" strokeWidth="1.6" />
+          <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.3 4.3l1.4 1.4M14.3 14.3l1.4 1.4M15.7 4.3l-1.4 1.4M5.7 14.3l-1.4 1.4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
 function Nav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   return (
@@ -160,7 +205,10 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             <div className="hidden text-sm text-ink-muted lg:block">
               Posture-Adaptive Hybrid Acoustic Sleep Ear-Wrap System
             </div>
-            <StatusPill />
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <StatusPill />
+            </div>
           </header>
 
           {/* mobile nav */}

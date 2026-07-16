@@ -69,7 +69,7 @@ export default function OverviewPage() {
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "radial-gradient(600px 300px at 50% -20%, rgba(144,133,233,0.14), transparent 70%)",
+              "radial-gradient(600px 300px at 50% -20%, var(--violet-soft), transparent 70%)",
           }}
         />
         <p className="relative mx-auto mb-4 w-fit rounded-full border border-hairline bg-surface-2 px-3 py-1 text-[11px] font-semibold tracking-wide text-ink-2">
@@ -87,7 +87,7 @@ export default function OverviewPage() {
         <div className="relative mt-7 flex flex-wrap justify-center gap-3">
           <Link
             href="/demo"
-            className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-black transition-transform hover:scale-[1.03]"
+            className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-[var(--on-accent)] transition-transform hover:scale-[1.03]"
           >
             🎧 Hear the invention
           </Link>

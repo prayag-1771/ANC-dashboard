@@ -174,7 +174,10 @@ export default function LivePage() {
             {frame?.mode === "hardware" ? "HARDWARE" : "SIMULATION"}
           </span>
         </div>
-        <pre className="mt-3 overflow-x-auto rounded-lg bg-[#0a0a09] p-3 font-mono text-xs leading-relaxed text-ink-2">
+        <pre
+          className="mt-3 overflow-x-auto rounded-lg p-3 font-mono text-xs leading-relaxed"
+          style={{ background: "var(--code-bg)", color: "var(--code-ink)" }}
+        >
 {`POST ${SERVER_HTTP}/api/device/telemetry
 Content-Type: application/json
 
