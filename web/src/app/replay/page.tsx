@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import StatTile from "@/components/StatTile";
 import { SERVER_HTTP } from "@/lib/telemetry";
+import { makeBrownNoise, dbToGain } from "@/lib/noise";
 
 /*
   Night Replay — a full simulated 8-hour night compressed into a minute:
@@ -64,8 +65,16 @@ export default function ReplayPage() {
   const [playing, setPlaying] = useState(false);
   const [duration, setDuration] = useState(60); // seconds for the full night
   const [hover, setHover] = useState<number | null>(null);
+  const [sound, setSound] = useState<"off" | "outside" | "ear">("off");
   const svgRef = useRef<SVGSVGElement>(null);
   const rafRef = useRef(0);
+  const audioRef = useRef<{
+    ctx: AudioContext;
+    gain: GainNode;
+    filter: BiquadFilterNode;
+    buf: AudioBuffer;
+  } | null>(null);
+  const prevIdxRef = useRef(0);
 
   useEffect(() => {
     fetch(`${SERVER_HTTP}/api/replay`)
@@ -94,6 +103,99 @@ export default function ReplayPage() {
     rafRef.current = requestAnimationFrame(step);
     return () => cancelAnimationFrame(rafRef.current);
   }, [playing, night, duration]);
+
+  // --- "hear the night" audio: a noise bed whose loudness tracks the chart ---
+  const setSoundMode = (m: "off" | "outside" | "ear") => {
+    if (m !== "off" && !audioRef.current) {
+      const ctx = new AudioContext();
+      const buf = makeBrownNoise(ctx, 3);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.loop = true;
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.value = 1400;
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      src.connect(filter).connect(gain).connect(ctx.destination);
+      src.start();
+      audioRef.current = { ctx, gain, filter, buf };
+    }
+    audioRef.current?.ctx.resume();
+    setSound(m);
+  };
+
+  const blip = (kind: string, peakDb: number) => {
+    const a = audioRef.current;
+    if (!a) return;
+    const { ctx } = a;
+    const t = ctx.currentTime;
+    const atEar = sound === "ear";
+    const amp = dbToGain(atEar ? peakDb - 22 : peakDb + 4);
+    if (kind === "horn" || kind === "siren") {
+      [440, 554].forEach((f) => {
+        const o = ctx.createOscillator();
+        o.type = "sawtooth";
+        o.frequency.value = atEar ? f * 0.98 : f;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(amp * 0.5, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
+        const f2 = ctx.createBiquadFilter();
+        f2.type = "lowpass";
+        f2.frequency.value = atEar ? 500 : 4000;
+        o.connect(g).connect(f2).connect(ctx.destination);
+        o.start(t);
+        o.stop(t + 0.6);
+      });
+    } else {
+      const src = ctx.createBufferSource();
+      src.buffer = a.buf;
+      const bp = ctx.createBiquadFilter();
+      bp.type = "bandpass";
+      bp.frequency.value = kind === "snore" ? 340 : kind === "dog" ? 750 : 500;
+      bp.Q.value = 1;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(amp, t + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+      src.connect(bp).connect(g).connect(ctx.destination);
+      src.start(t);
+      src.stop(t + 0.4);
+    }
+  };
+
+  useEffect(
+    () => () => {
+      audioRef.current?.ctx.close().catch(() => {});
+    },
+    [],
+  );
+
+  // follow the playhead: loudness = the chart's dB at this minute
+  useEffect(() => {
+    const a = audioRef.current;
+    if (!a || !night) return;
+    const i = Math.min(Math.round(hover ?? cursor), night.minutes - 1);
+    if (sound === "off" || !playing) {
+      a.gain.gain.setTargetAtTime(0, a.ctx.currentTime, 0.1);
+      prevIdxRef.current = i;
+      return;
+    }
+    const s = night.samples[i];
+    const db = sound === "ear" ? s.residualDb : s.ambientDb;
+    a.gain.gain.setTargetAtTime(dbToGain(db), a.ctx.currentTime, 0.08);
+    // at the ear everything is muffled by the passive layers
+    a.filter.frequency.setTargetAtTime(sound === "ear" ? 420 : 1400, a.ctx.currentTime, 0.1);
+    const from = prevIdxRef.current;
+    if (i > from && i - from < 30) {
+      night.events
+        .filter((e) => e.minute > from && e.minute <= i)
+        .forEach((e) => blip(e.kind, e.peakDb));
+    }
+    prevIdxRef.current = i;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cursor, hover, sound, playing, night]);
 
   const x = (m: number) => PAD.l + ((W - PAD.l - PAD.r) * m) / ((night?.minutes ?? 480) - 1);
   const y = (db: number) => PAD.t + (H - PAD.t - PAD.b) * (1 - (db - DB_MIN) / (DB_MAX - DB_MIN));
@@ -285,7 +387,31 @@ export default function ReplayPage() {
               </button>
             ))}
           </div>
+          <div className="flex gap-1 text-xs" role="group" aria-label="Replay sound">
+            {(
+              [
+                ["off", "🔇 Mute"],
+                ["outside", "🌍 Outside"],
+                ["ear", "👂 At the ear"],
+              ] as const
+            ).map(([m, labelText]) => (
+              <button
+                key={m}
+                onClick={() => setSoundMode(m)}
+                className={`rounded-full border px-2.5 py-1 transition-colors ${
+                  sound === m ? "border-accent bg-[var(--accent-soft)] text-ink" : "border-hairline text-ink-muted hover:text-ink-2"
+                }`}
+              >
+                {labelText}
+              </button>
+            ))}
+          </div>
         </div>
+        <p className="mt-2 text-xs text-ink-muted">
+          🎧 Turn the sound on and press play — then flip between what the street sounded like
+          (<span className="text-ink-2">Outside</span>) and what actually reached the sleeper
+          (<span className="text-ink-2">At the ear</span>). Every diamond fires its own sound.
+        </p>
       </section>
 
       {/* moment readout */}

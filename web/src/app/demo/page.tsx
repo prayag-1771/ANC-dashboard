@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { makeBrownNoise } from "@/lib/noise";
 
 /*
   ANC Audio Lab — an audible, interactive model of the invention's hybrid
@@ -26,26 +27,13 @@ interface Rig {
   srcBus: GainNode;
 }
 
-function makeBrownNoise(ctx: AudioContext) {
-  const len = ctx.sampleRate * 4;
-  const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-  const data = buf.getChannelData(0);
-  let last = 0;
-  for (let i = 0; i < len; i++) {
-    const white = Math.random() * 2 - 1;
-    last = (last + 0.02 * white) / 1.02;
-    data[i] = last * 3.5;
-  }
-  return buf;
-}
-
 export default function DemoPage() {
   const rigRef = useRef<Rig | null>(null);
   const [powered, setPowered] = useState(false);
   const [playing, setPlaying] = useState<Record<SourceKind, boolean>>({ traffic: false, snore: false });
   const [passiveOn, setPassiveOn] = useState(false);
   const [ancOn, setAncOn] = useState(false);
-  const [volume, setVolume] = useState(0.6);
+  const [volume, setVolume] = useState(0.8);
   const [meterDb, setMeterDb] = useState(-60);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef(0);
@@ -79,11 +67,20 @@ export default function DemoPage() {
     const outAnalyser = ctx.createAnalyser();
     outAnalyser.fftSize = 2048;
 
+    // keep the louder sources from clipping
+    const limiter = ctx.createDynamicsCompressor();
+    limiter.threshold.value = -14;
+    limiter.knee.value = 10;
+    limiter.ratio.value = 8;
+    limiter.attack.value = 0.004;
+    limiter.release.value = 0.2;
+
     srcBus.connect(inAnalyser);
     inAnalyser.connect(passive);
     passive.connect(anc);
     anc.connect(master);
-    master.connect(outAnalyser);
+    master.connect(limiter);
+    limiter.connect(outAnalyser);
     outAnalyser.connect(ctx.destination);
 
     rigRef.current = { ctx, passive, anc, master, inAnalyser, outAnalyser, sources: {}, srcBus };
@@ -105,20 +102,22 @@ export default function DemoPage() {
     const stops: (() => void)[] = [];
 
     if (kind === "traffic") {
+      // brown noise voiced into the mid range so laptop speakers reproduce it,
+      // plus a deep rumble partial for headphone listeners
       const noise = ctx.createBufferSource();
       noise.buffer = makeBrownNoise(ctx);
       noise.loop = true;
       const lp = ctx.createBiquadFilter();
       lp.type = "lowpass";
-      lp.frequency.value = 380;
+      lp.frequency.value = 1100;
       const g = ctx.createGain();
-      g.gain.value = 0.5;
+      g.gain.value = 1.6;
       noise.connect(lp).connect(g).connect(srcBus);
       const rumble = ctx.createOscillator();
       rumble.type = "sine";
-      rumble.frequency.value = 52;
+      rumble.frequency.value = 58;
       const rg = ctx.createGain();
-      rg.gain.value = 0.12;
+      rg.gain.value = 0.3;
       rumble.connect(rg).connect(srcBus);
       noise.start();
       rumble.start();
@@ -134,8 +133,8 @@ export default function DemoPage() {
       noise.loop = true;
       const bp = ctx.createBiquadFilter();
       bp.type = "bandpass";
-      bp.frequency.value = 190;
-      bp.Q.value = 1.4;
+      bp.frequency.value = 340;
+      bp.Q.value = 0.9;
       const env = ctx.createGain();
       env.gain.value = 0;
       const lfo = ctx.createOscillator();
@@ -144,7 +143,7 @@ export default function DemoPage() {
       const curve = new Float32Array(256);
       for (let i = 0; i < 256; i++) {
         const x = i / 255;
-        curve[i] = Math.pow(Math.max(0, Math.sin(x * Math.PI)), 3) * 1.1; // peaky inhale
+        curve[i] = Math.pow(Math.max(0, Math.sin(x * Math.PI)), 3) * 2.6; // peaky inhale
       }
       shaper.curve = curve;
       const lfoGain = ctx.createGain();
@@ -180,8 +179,8 @@ export default function DemoPage() {
       o.frequency.value = f;
       const g = ctx.createGain();
       g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(0.16, t + 0.03);
-      g.gain.setValueAtTime(0.16, t + 0.7);
+      g.gain.linearRampToValueAtTime(0.22, t + 0.03);
+      g.gain.setValueAtTime(0.22, t + 0.7);
       g.gain.exponentialRampToValueAtTime(0.001, t + 1.1);
       o.connect(g).connect(srcBus);
       o.start(t);
